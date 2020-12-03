@@ -3,9 +3,9 @@
 require 'csv'
 require 'json'
 require 'rack/utils'
-require 'with_dry/simple_contract'
+require 'with_railses/simple_contract'
 
-RSpec.describe WithDry::SimpleContract do
+RSpec.describe WithRailses::SimpleContract do
   subject { contract.call(input) }
 
   let(:contract) { described_class.new }
@@ -19,11 +19,11 @@ RSpec.describe WithDry::SimpleContract do
   end
 
   shared_examples '⛔️ validation' do
-    it { is_expected.not_to be_success }
+    it { is_expected.not_to be_valid }
 
     if metadata[:errors]
       describe 'errors' do
-        subject { super().errors(full: true).map(&:to_s) }
+        subject { super().errors.full_messages }
 
         it { |ex| is_expected.to(contain_exactly(*ex.metadata[:errors])) }
       end
@@ -31,37 +31,44 @@ RSpec.describe WithDry::SimpleContract do
   end
 
   shared_examples '✅ validation' do
-    it { is_expected.to be_success }
+    it { is_expected.to be_valid }
+  end
+
+  shared_context '🟡 unsupported' do
+    around do |ex|
+      pending('unsupported')
+      ex.run
+    end
   end
 
   context 'with invalid data' do
     context 'name too short',
             input: { name: 'Foo', email: 'foo@bar.com' },
-            errors: 'name size cannot be less than 5' do
+            errors: 'Name is too short (minimum is 5 characters)' do
       include_examples '⛔️ validation'
     end
 
     context 'email invalid',
             input: { name: 'FooBar', email: 'foo-without-at-sign' },
-            errors: 'email is in invalid format' do
+            errors: 'Email is invalid' do
       include_examples '⛔️ validation'
     end
 
     context 'business rule validation',
             input: { name: 'FooBar', email: 'bazquz@quz.com' },
-            errors: 'name seems not legit' do
+            errors: 'Name seems not legit' do
       include_examples '⛔️ validation'
     end
 
     context 'all issues',
             input: { name: 'Foo', email: 'foo-without-at-sign' },
-            errors: ['name size cannot be less than 5', 'email is in invalid format'] do
+            errors: ['Name is too short (minimum is 5 characters)', 'Email is invalid'] do
       include_examples '⛔️ validation'
     end
 
     context 'optional field passed',
             input: { name: 'FooBar', email: 'foobar@example.com', age: 9 },
-            errors: 'age must be greater than 10' do
+            errors: 'Age must be greater than 10' do
       include_examples '⛔️ validation'
     end
 
@@ -69,12 +76,14 @@ RSpec.describe WithDry::SimpleContract do
             input: { name: 'FooBar', email: 'foobar@example.com', fingers: nil },
             errors: 'fingers must be filled' do
       include_examples '⛔️ validation'
+      include_context '🟡 unsupported'
     end
 
     context 'unfilled fields in query string',
             query: 'name=FooBar&email=foobar@example.com&fingers=',
             errors: 'fingers must be filled' do
       include_examples '⛔️ validation'
+      include_context '🟡 unsupported'
     end
   end
 
