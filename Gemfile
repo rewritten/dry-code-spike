@@ -1,13 +1,17 @@
 # frozen_string_literal: true
 
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+gem 'actionpack', '~> 6.0'
+gem 'activemodel', '~> 6.0'
+gem 'dry-validation', '~> 1.5'
 
-# gem "rails"
+# parsers
+gem 'json', '~> 2.3'
+gem 'rack', '~> 2.2'
 
-gem "dry-validation", "~> 1.5"
-gem "strong_parameters", "~> 0.1.4"
-gem "activemodel", "~> 6.0"
-
-gem "rspec", "~> 3.10"
+# for testing
+gem 'reek', '~> 6.0'
+gem 'rspec', '~> 3.10'
+gem 'rubocop-rspec', '~> 2.0'
+gem 'rubocop', '~> 1.5'
