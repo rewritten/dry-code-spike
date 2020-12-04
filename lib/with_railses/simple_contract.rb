@@ -7,17 +7,14 @@ module WithRailses
   # A very simple contract
   class SimpleContract
     def call(params)
-      params
-        .then { strengthen(_1) }
-        .then { schema(_1) }
-        .then { Model.new(_1) }
-        .tap(&:valid?)
+      Model.new(strong(params)).tap(&:valid?)
     end
 
     # internal class for validation
     class Model
       include ActiveModel::Model
       include ActiveModel::Attributes
+      include ActiveModel::Serialization
 
       attribute :name, :string
       attribute :email, :string
@@ -36,7 +33,7 @@ module WithRailses
       validate :email_starts_with_name
 
       def to_h
-        @attributes.to_h.symbolize_keys
+        serializable_hash.symbolize_keys
       end
 
       private
@@ -51,11 +48,8 @@ module WithRailses
 
     private
 
-    def strengthen(params)
-      ::ActionController::Parameters.new(params)
-    end
-
-    def schema(params)
+    def strong(params)
+      params = ::ActionController::Parameters.new(params)
       params.require(:name)
       params.require(:email)
       params.permit(:name, :email, :age, :fingers)
